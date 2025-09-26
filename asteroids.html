@@ -23,11 +23,17 @@
             border: 3px solid #00ffff;
             border-radius: 10px;
             box-shadow: 0 0 30px rgba(0, 255, 255, 0.3), inset 0 0 20px rgba(0, 255, 255, 0.1);
+            width: 100vw;
+            height: 100vh;
+            max-width: 100%;
+            max-height: 100%;
         }
 
         #gameCanvas {
             display: block;
             border-radius: 7px;
+            width: 100%;
+            height: 100%;
         }
 
         .ui {
@@ -85,7 +91,7 @@
 </head>
 <body>
     <div class="game-container">
-        <canvas id="gameCanvas" width="800" height="600"></canvas>
+        <canvas id="gameCanvas"></canvas>
 
         <div class="ui">
             <div>Score: <span id="score">0</span></div>
@@ -109,14 +115,42 @@
 
     <script>
         // =========================
+        // Global variables (declare first)
+        // =========================
+        let canvas, ctx, canvasWidth, canvasHeight;
+        let game, player, asteroids, gems, lasers;
+        let keys = {};
+        let lastShot = 0;
+
+        // =========================
+        // Canvas and dimensions
+        // =========================
+        function initCanvas() {
+            canvas = document.getElementById('gameCanvas');
+            ctx = canvas.getContext('2d');
+            
+            canvasWidth = window.innerWidth;
+            canvasHeight = window.innerHeight;
+            
+            resizeCanvas();
+        }
+
+        function resizeCanvas() {
+            canvasWidth = window.innerWidth;
+            canvasHeight = window.innerHeight;
+            canvas.width = canvasWidth;
+            canvas.height = canvasHeight;
+            
+            // Reinitialize stars when canvas resizes (only if game exists)
+            if (game && typeof initStars === 'function') {
+                initStars();
+            }
+        }
+
+        // =========================
         // Settings (tweakables)
         // =========================
         const CONFIG = {
-            canvas: {
-                width: 800,
-                height: 600,
-                clearColor: 'rgba(10, 10, 35, 0.9)'
-            },
             game: {
                 initialScore: 0,
                 initialLevel: 1,
@@ -131,7 +165,7 @@
                 baseHeight: 25,
                 speed: 5,
                 trailMax: 10,
-                incSizeFactor: 0, // PlayerIncSize
+                incSizeFactor: 0,
                 enginePulseIncrement: 1,
                 colors: {
                     body: '#00ffff',
@@ -148,7 +182,7 @@
                 }
             },
             stars: {
-                count: 100,
+                density: 0.0001, // Stars per pixel
                 sizeMin: 0.5,
                 sizeRange: 2,
                 speedMin: 0.5,
@@ -170,12 +204,12 @@
                 sizeRange: 90,
                 sidesMin: 3,
                 sidesRange: 5,
-                horizontalOffset: 4, // (rand-0.5)*4
-                rotSpeedRange: 1, // (rand-0.5)*1
-                baseSpeedMax: 2,  // Math.random() * 2
-                levelSpeedFactor: 0.5, // + level * 0.5
-                spawnBaseProb: 0.02,
-                spawnLevelFactor: 0.005,
+                horizontalOffset: 4,
+                rotSpeedRange: 1,
+                baseSpeedMax: 2,
+                levelSpeedFactor: 0.5,
+                spawnBaseProb: 0.00002, // Per pixel width
+                spawnLevelFactor: 0.000005,
                 color: {
                     red: 255,
                     greenMaxExclusive: 166,
@@ -188,7 +222,7 @@
                 speedMin: 3,
                 speedRange: 2,
                 pulseRate: 0.15,
-                spawnProb: 0.015,
+                spawnProb: 0.000015, // Per pixel width
                 colors: {
                     fill: '#ffff00',
                     glow: '#ffff00',
@@ -211,63 +245,60 @@
         };
 
         // =========================
-        // DOM and canvas
+        // Initialize game state
         // =========================
-        const canvas = document.getElementById('gameCanvas');
-        const ctx = canvas.getContext('2d');
+        function initGameState() {
+            game = {
+                score: CONFIG.game.initialScore,
+                level: CONFIG.game.initialLevel,
+                lives: CONFIG.game.initialLives,
+                gameOver: CONFIG.game.startGameOver,
+                particles: [],
+                stars: []
+            };
 
-        // =========================
-        // Game state
-        // =========================
-        let game = {
-            score: CONFIG.game.initialScore,
-            level: CONFIG.game.initialLevel,
-            lives: CONFIG.game.initialLives,
-            gameOver: CONFIG.game.startGameOver,
-            particles: [],
-            stars: []
-        };
+            player = {
+                width: CONFIG.player.baseWidth,
+                height: CONFIG.player.baseHeight,
+                x: 0,
+                y: 0,
+                speed: CONFIG.player.speed,
+                trail: [],
+                enginePulse: 0
+            };
 
-        // =========================
-        // Player
-        // =========================
-        const player = {
-            width: CONFIG.player.baseWidth,
-            height: CONFIG.player.baseHeight,
-            x: CONFIG.canvas.width / 2 - CONFIG.player.baseWidth / 2,
-            y: CONFIG.canvas.height - CONFIG.player.baseHeight - CONFIG.player.baseHeight / 2,
-            speed: CONFIG.player.speed,
-            trail: [],
-            enginePulse: 0
-        };
+            asteroids = [];
+            gems = [];
+            lasers = [];
+        }
 
-        // =========================
-        // Game objects
-        // =========================
-        let asteroids = [];
-        let gems = [];
-        let lasers = [];
+        function resetPlayerPosition() {
+            player.x = canvasWidth / 2 - player.width / 2;
+            player.y = canvasHeight - player.height - player.height / 2;
+        }
 
         // =========================
         // Input
         // =========================
-        const keys = {};
-        let lastShot = 0;
+        function initInput() {
+            document.addEventListener('keydown', (e) => {
+                keys[e.key.toLowerCase()] = true;
+                if (e.key === ' ') {
+                    keys['space'] = true;
+                    e.preventDefault();
+                }
+            });
 
-        document.addEventListener('keydown', (e) => {
-            keys[e.key.toLowerCase()] = true;
-            if (e.key === ' ') {
-                keys['space'] = true;
-                e.preventDefault();
-            }
-        });
+            document.addEventListener('keyup', (e) => {
+                keys[e.key.toLowerCase()] = false;
+                if (e.key === ' ') {
+                    keys['space'] = false;
+                }
+            });
 
-        document.addEventListener('keyup', (e) => {
-            keys[e.key.toLowerCase()] = false;
-            if (e.key === ' ') {
-                keys['space'] = false;
-            }
-        });
+            // Listen for window resize
+            window.addEventListener('resize', resizeCanvas);
+        }
 
         // =========================
         // Utility
@@ -290,11 +321,17 @@
         // Background stars
         // =========================
         function initStars() {
+            if (!game) {
+                console.error('Game not initialized yet, cannot init stars');
+                return;
+            }
+            
             game.stars = [];
-            for (let i = 0; i < CONFIG.stars.count; i++) {
+            const starCount = Math.floor(canvasWidth * canvasHeight * CONFIG.stars.density);
+            for (let i = 0; i < starCount; i++) {
                 game.stars.push({
-                    x: Math.random() * CONFIG.canvas.width,
-                    y: Math.random() * CONFIG.canvas.height,
+                    x: Math.random() * canvasWidth,
+                    y: Math.random() * canvasHeight,
                     size: Math.random() * CONFIG.stars.sizeRange + CONFIG.stars.sizeMin,
                     speed: Math.random() * CONFIG.stars.speedRange + CONFIG.stars.speedMin,
                     opacity: Math.random() * CONFIG.stars.opacityRange + CONFIG.stars.opacityMin
@@ -305,9 +342,9 @@
         function updateStars() {
             for (const star of game.stars) {
                 star.y += star.speed;
-                if (star.y > CONFIG.canvas.height) {
+                if (star.y > canvasHeight) {
                     star.y = 0;
-                    star.x = Math.random() * CONFIG.canvas.width;
+                    star.x = Math.random() * canvasWidth;
                 }
             }
         }
@@ -372,7 +409,7 @@
         function createAsteroid() {
             const size = Math.random() * CONFIG.asteroid.sizeRange + CONFIG.asteroid.sizeMin;
             return {
-                x: Math.random() * (CONFIG.canvas.width - size),
+                x: Math.random() * (canvasWidth - size),
                 y: -size,
                 horizontalOffset: (Math.random() - 0.5) * CONFIG.asteroid.horizontalOffset,
                 width: size,
@@ -387,7 +424,7 @@
 
         function createGem() {
             return {
-                x: Math.random() * (CONFIG.canvas.width - CONFIG.gem.width),
+                x: Math.random() * (canvasWidth - CONFIG.gem.width),
                 y: -CONFIG.gem.height,
                 width: CONFIG.gem.width,
                 height: CONFIG.gem.height,
@@ -544,13 +581,13 @@
             if ((keys['a'] || keys['arrowleft']) && player.x > 0) {
                 player.x -= player.speed;
             }
-            if ((keys['d'] || keys['arrowright']) && player.x < CONFIG.canvas.width - player.width) {
+            if ((keys['d'] || keys['arrowright']) && player.x < canvasWidth - player.width) {
                 player.x += player.speed;
             }
             if ((keys['w'] || keys['arrowup']) && player.y > 0) {
                 player.y -= player.speed;
             }
-            if ((keys['s'] || keys['arrowdown']) && player.y < CONFIG.canvas.height - player.height) {
+            if ((keys['s'] || keys['arrowdown']) && player.y < canvasHeight - player.height) {
                 player.y += player.speed;
             }
 
@@ -574,10 +611,10 @@
             for (let i = asteroids.length - 1; i >= 0; i--) {
                 const a = asteroids[i];
                 a.y += a.speed;
-				a.x += a.horizontalOffset;
+                a.x += a.horizontalOffset;
                 a.rotation += a.rotationSpeed;
 
-                if (a.y > CONFIG.canvas.height) {
+                if (a.y > canvasHeight) {
                     asteroids.splice(i, 1);
                 }
 
@@ -585,8 +622,7 @@
                     createExplosion(player.x + player.width / 2, player.y + player.height / 2, CONFIG.player.colors.engineGlow);
                     game.lives--;
 
-                    player.x = CONFIG.canvas.width / 2 - CONFIG.player.baseWidth / 2;
-                    player.y = CONFIG.canvas.height - CONFIG.player.baseHeight - CONFIG.player.baseHeight / 2;
+                    resetPlayerPosition();
                     player.width = CONFIG.player.baseWidth;
                     player.height = CONFIG.player.baseHeight;
 
@@ -598,7 +634,8 @@
                 }
             }
 
-            if (Math.random() < CONFIG.asteroid.spawnBaseProb + game.level * CONFIG.asteroid.spawnLevelFactor) {
+            const asteroidSpawnRate = CONFIG.asteroid.spawnBaseProb + game.level * CONFIG.asteroid.spawnLevelFactor;
+            if (Math.random() < asteroidSpawnRate * canvasWidth) {
                 asteroids.push(createAsteroid());
             }
         }
@@ -609,7 +646,7 @@
                 g.y += g.speed;
                 g.pulse += CONFIG.gem.pulseRate;
 
-                if (g.y > CONFIG.canvas.height) {
+                if (g.y > canvasHeight) {
                     gems.splice(i, 1);
                 }
 
@@ -627,7 +664,7 @@
                 }
             }
 
-            if (Math.random() < CONFIG.gem.spawnProb) {
+            if (Math.random() < CONFIG.gem.spawnProb * canvasWidth) {
                 gems.push(createGem());
             }
         }
@@ -668,9 +705,12 @@
             document.getElementById('level').textContent = game.level;
             document.getElementById('lives').textContent = game.lives;
 
+            const gameOverElement = document.getElementById('gameOver');
             if (game.gameOver) {
                 document.getElementById('finalScore').textContent = game.score;
-                document.getElementById('gameOver').style.display = 'block';
+                gameOverElement.style.display = 'block';
+            } else {
+                gameOverElement.style.display = 'none';
             }
         }
 
@@ -679,8 +719,8 @@
         // =========================
         function gameLoop() {
             if (!game.gameOver) {
-                ctx.fillStyle = CONFIG.canvas.clearColor;
-                ctx.fillRect(0, 0, CONFIG.canvas.width, CONFIG.canvas.height);
+                ctx.fillStyle = 'rgba(10, 10, 35, 0.9)';
+                ctx.fillRect(0, 0, canvasWidth, canvasHeight);
 
                 updateStars();
                 updatePlayer();
@@ -713,8 +753,7 @@
             game.gameOver = false;
             game.particles = [];
 
-            player.x = CONFIG.canvas.width / 2 - CONFIG.player.baseWidth / 2;
-            player.y = CONFIG.canvas.height - CONFIG.player.baseHeight - CONFIG.player.baseHeight / 2;
+            resetPlayerPosition();
             player.width = CONFIG.player.baseWidth;
             player.height = CONFIG.player.baseHeight;
 
@@ -722,6 +761,7 @@
             player.enginePulse = 0;
 
             asteroids = [];
+            gems = [];
             lasers = [];
 
             document.getElementById('gameOver').style.display = 'none';
@@ -732,8 +772,39 @@
         // =========================
         // Init
         // =========================
-        initStars();
-        gameLoop();
+        function initGame() {
+            console.log('Initializing game...');
+            
+            // Initialize canvas first
+            initCanvas();
+            
+            // Initialize game state
+            initGameState();
+            
+            // Initialize input handlers  
+            initInput();
+            
+            // Set up player position
+            resetPlayerPosition();
+            
+            // Initialize stars
+            initStars();
+            
+            // Show initial UI state (game over screen)
+            console.log('Game over state:', game.gameOver);
+            updateUI();
+            
+            // Start game loop
+            gameLoop();
+            
+            console.log('Game initialized');
+        }
+
+        // Wait for DOM to be fully loaded
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('DOM loaded, starting game initialization...');
+            initGame();
+        });
     </script>
 </body>
 </html>
