@@ -1,349 +1,810 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <title>Interactive Metronome (URL-sync)</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <style>
-    :root {
-      --bg: #0e0f1a;
-      --text: #e8e9f0;
-      --muted: #a9acc4;
-      --hi: #ff6b6b;   /* high beat color */
-      --lo: #f5a524;   /* low beat color */
-      --mu: #9aa0a6;   /* mute color */
-      --active: #5b8cff;
-    }
-    body {
-      margin: 0;
-      background: var(--bg);
-      color: var(--text);
-      font-family: system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, "Helvetica Neue", Arial;
-      display: grid;
-      place-items: center;
-      padding: 24px;
-    }
-    .wrap { width: 100%; max-width: 720px; }
-    h1 { margin: 0 0 14px; font-size: 22px; font-weight: 650; }
-    .controls {
-      display: grid;
-      grid-template-columns: 1fr 1fr auto;
-      gap: 12px;
-      align-items: end;
-      margin-bottom: 16px;
-    }
-    @media (max-width: 640px) {
-      .controls { grid-template-columns: 1fr; }
-    }
-    .field { display: grid; gap: 6px; }
-    .label { font-size: 12px; color: var(--muted); }
-    input[type="number"], input[type="text"] {
-      background: #141726;
-      color: var(--text);
-      border: 1px solid #2a2f45;
-      border-radius: 10px;
-      padding: 10px 12px;
-      outline: none;
-      font-size: 14px;
-    }
-    input[type="number"]:focus, input[type="text"]:focus {
-      border-color: #3856ff88;
-      box-shadow: 0 0 0 6px rgba(91,140,255,0.18);
-    }
-    input[readonly] {
-      background: #0f1118;
-      color: var(--muted);
-      cursor: default;
-    }
-    input[readonly]:focus {
-      border-color: #2a2f45;
-      box-shadow: none;
-    }
-    button {
-      appearance: none;
-      padding: 12px 16px;
-      border-radius: 12px;
-      border: 1px solid #2a3055;
-      background: linear-gradient(180deg, #2b3567, #23305d);
-      color: #eef1ff;
-      font-weight: 600;
-      letter-spacing: 0.2px;
-      cursor: pointer;
-    }
-    button:hover { filter: brightness(1.05); }
-    .beatbar {
-      display: grid;
-      grid-auto-flow: column;
-      grid-auto-columns: minmax(0, 48px);
-      gap: 12px;
-      justify-content: start;
-      margin-top: 12px;
-      user-select: none;
-    }
-    .beat {
-      width: 48px; height: 48px;
-      border-radius: 50%;
-      background: #2a2d3f;
-      border: 2px solid #3a3f5c;
-      display: grid; place-items: center;
-      cursor: pointer;
-      transition: transform .05s ease, box-shadow .1s ease, border-color .1s ease;
-      position: relative;
-    }
-    .beat:active { transform: translateY(1px) scale(0.98); }
-    .beat.high { background: #2a2d3f; border-color: #5a2e2e; }
-    .beat.low  { background: #2a2d3f; border-color: #6e5227; }
-    .beat.mute { background: #2a2d3f; border-color: #4b5166; opacity: 0.8; }
-    .dot {
-      width: 14px; height: 14px; border-radius: 50%;
-      background: var(--mu);
-      box-shadow: 0 0 0 6px rgba(255,255,255,0.02);
-      transition: background .1s ease, box-shadow .1s ease;
-    }
-    .high .dot { background: var(--hi); box-shadow: 0 0 0 6px rgba(255,107,107,0.15); }
-    .low  .dot { background: var(--lo); box-shadow: 0 0 0 6px rgba(245,165,36,0.15); }
-    .mute .dot { background: var(--mu); box-shadow: 0 0 0 6px rgba(154,160,166,0.12); }
-    .beat.active .dot {
-      box-shadow: 0 0 0 8px rgba(91,140,255,0.20), 0 0 24px rgba(91,140,255,0.45);
-    }
-    .legend {
-      margin-top: 10px;
-      font-size: 12px; color: var(--muted);
-    }
-    .legend span { display: inline-flex; align-items: center; gap: 6px; margin-right: 12px; }
-    .swatch { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }
-    .swatch.hi { background: var(--hi); }
-    .swatch.lo { background: var(--lo); }
-    .swatch.mu { background: var(--mu); }
-  </style>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>Space Explorer</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background: linear-gradient(135deg, #0c0c0c 0%, #1a1a2e 50%, #16213e 100%);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            font-family: 'Courier New', monospace;
+            overflow: hidden;
+        }
+
+        .game-container {
+            position: relative;
+            background: radial-gradient(ellipse at center, #0a0a23 0%, #000000 70%);
+            border: 3px solid #00ffff;
+            border-radius: 10px;
+            box-shadow: 0 0 30px rgba(0, 255, 255, 0.3), inset 0 0 20px rgba(0, 255, 255, 0.1);
+            width: 100vw;
+            height: 100vh;
+            max-width: 100%;
+            max-height: 100%;
+        }
+
+        #gameCanvas {
+            display: block;
+            border-radius: 7px;
+            width: 100%;
+            height: 100%;
+        }
+
+        .ui {
+            position: absolute;
+            top: 15px;
+            left: 15px;
+            color: #00ffff;
+            font-size: 18px;
+            text-shadow: 0 0 10px rgba(0, 255, 255, 0.8);
+            z-index: 10;
+        }
+
+        .controls {
+            position: absolute;
+            bottom: 15px;
+            right: 15px;
+            color: #00ffff;
+            font-size: 12px;
+            text-align: right;
+            opacity: 0.7;
+            z-index: 10;
+        }
+
+        .game-over {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: #ff6b6b;
+            text-align: center;
+            font-size: 24px;
+            text-shadow: 0 0 20px rgba(255, 107, 107, 0.8);
+            z-index: 20;
+            display: none;
+        }
+
+        .restart-btn {
+            background: linear-gradient(45deg, #ff6b6b, #ff8e8e);
+            border: none;
+            color: white;
+            padding: 12px 24px;
+            font-size: 16px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin-top: 15px;
+            box-shadow: 0 4px 15px rgba(255, 107, 107, 0.3);
+            transition: all 0.3s ease;
+        }
+
+        .restart-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(255, 107, 107, 0.4);
+        }
+    </style>
 </head>
 <body>
-  <div class="wrap">
-    <h1>Metronome</h1>
+    <div class="game-container">
+        <canvas id="gameCanvas"></canvas>
 
-    <div class="controls">
-      <div class="field">
-        <div class="label">Tempo (BPM)</div>
-        <input id="bpm" type="number" min="1" max="900" value="120" />
-      </div>
-      <div class="field">
-        <div class="label">Beats per bar</div>
-        <input id="beats" type="number" min="1" max="64" value="4" />
-      </div>
-      <button id="toggleBtn">Start</button>
-      <div class="field" style="grid-column: 1 / -1;">
-        <div class="label">Pattern (high,low,mute)</div>
-        <input id="pattern" type="text" value="high,low,low,mute" readonly />
-      </div>
+        <div class="ui">
+            <div>Score: <span id="score">0</span></div>
+            <div>Level: <span id="level">1</span></div>
+            <div>Lives: <span id="lives">3</span></div>
+        </div>
+
+        <div class="controls">
+            <div>A/D or ← → to move left/right</div>
+            <div>W/S or ↑ ↓ to move up/down</div>
+            <div>Hold SPACEBAR for continuous fire</div>
+            <div>Collect gems • Avoid asteroids</div>
+        </div>
+
+        <div class="game-over" id="gameOver">
+            <div>GAME OVER</div>
+            <div style="font-size: 16px; margin: 10px 0;">Final Score: <span id="finalScore">0</span></div>
+            <button class="restart-btn" onclick="restartGame()">Play Again</button>
+        </div>
     </div>
 
-    <div id="beatBar" class="beatbar" aria-label="Beat pattern"></div>
-    <div class="legend">
-      <span><i class="swatch hi"></i> high</span>
-      <span><i class="swatch lo"></i> low</span>
-      <span><i class="swatch mu"></i> mute</span>
-      <span>Click a beat to cycle: high → low → mute</span>
-    </div>
-  </div>
+    <script>
+        // =========================
+        // Global variables (declare first)
+        // =========================
+        let canvas, ctx, canvasWidth, canvasHeight;
+        let game, player, asteroids, gems, lasers;
+        let keys = {};
+        let lastShot = 0;
 
-  <script>
-    // ---------- State ----------
-    const $ = (id) => document.getElementById(id);
+        // =========================
+        // Canvas and dimensions
+        // =========================
+        function initCanvas() {
+            canvas = document.getElementById('gameCanvas');
+            ctx = canvas.getContext('2d');
+            
+            canvasWidth = window.innerWidth;
+            canvasHeight = window.innerHeight;
+            
+            resizeCanvas();
+        }
 
-    const SOUND_CYCLE = ["high", "low", "mute"];
-    const ALIASES = { h: "high", hi: "high", l: "low", lo: "low", m: "mute", mu: "mute", 1: "high", 2: "low", 0: "mute" };
+        function resizeCanvas() {
+            canvasWidth = window.innerWidth;
+            canvasHeight = window.innerHeight;
+            canvas.width = canvasWidth;
+            canvas.height = canvasHeight;
+            
+            // Reinitialize stars when canvas resizes (only if game exists)
+            if (game && typeof initStars === 'function') {
+                initStars();
+            }
+        }
 
-    const state = {
-      bpm: 120,
-      beats: 4,
-      sounds: ["high", "low", "low", "mute"],
-      playing: false,
-      currentBeat: 0,
-      timer: null,
-      audio: null
-    };
+        // =========================
+        // Settings (tweakables)
+        // =========================
+        const CONFIG = {
+            game: {
+                initialScore: 0,
+                initialLevel: 1,
+                initialLives: 3,
+                startGameOver: true
+            },
+            input: {
+                shotCooldownMs: 50
+            },
+            player: {
+                baseWidth: 20,
+                baseHeight: 25,
+                speed: 5,
+                trailMax: 10,
+                incSizeFactor: 0,
+                enginePulseIncrement: 1,
+                colors: {
+                    body: '#00ffff',
+                    detail: '#ffffff',
+                    engineGlow: '#ff6b6b'
+                },
+                enginePulse: {
+                    intensityBase: 0.5,
+                    intensityRange: 0.5,
+                    intensityRate: 0.3,
+                    alphaBase: 0.7,
+                    alphaRange: 0.3,
+                    alphaRate: 0.2
+                }
+            },
+            stars: {
+                density: 0.0001, // Stars per pixel
+                sizeMin: 0.5,
+                sizeRange: 2,
+                speedMin: 0.5,
+                speedRange: 2,
+                opacityMin: 0.2,
+                opacityRange: 0.8
+            },
+            particles: {
+                defaultSpeed: 3,
+                explosionSpeed: 5,
+                lifeDecay: 0.02,
+                sizeMin: 2,
+                sizeRange: 4,
+                asteroidExplosionCount: 20,
+                gemExplosionCount: 8
+            },
+            asteroid: {
+                sizeMin: 20,
+                sizeRange: 90,
+                sidesMin: 3,
+                sidesRange: 5,
+                horizontalOffset: 4,
+                rotSpeedRange: 1,
+                baseSpeedMax: 2,
+                levelSpeedFactor: 0.5,
+                spawnBaseProb: 0.00002, // Per pixel width
+                spawnLevelFactor: 0.000005,
+                color: {
+                    red: 255,
+                    greenMaxExclusive: 166,
+                    blueMaxExclusive: 166
+                }
+            },
+            gem: {
+                width: 15,
+                height: 15,
+                speedMin: 3,
+                speedRange: 2,
+                pulseRate: 0.15,
+                spawnProb: 0.000015, // Per pixel width
+                colors: {
+                    fill: '#ffff00',
+                    glow: '#ffff00',
+                    stroke: '#ffffff'
+                }
+            },
+            laser: {
+                width: 2,
+                height: 15,
+                speed: 12,
+                color: '#00ffff',
+                centerColor: '#ffffff',
+                xOffset: -1
+            },
+            scoring: {
+                gemValue: 10,
+                asteroidValue: 25,
+                levelUpEvery: 100
+            }
+        };
 
-    // ---------- Audio (crisp "black-screen" click) ----------
-    function ensureAudio() {
-      if (!state.audio) {
-        const ctx = new (window.AudioContext || window.webkitAudioContext)();
-        state.audio = { ctx };
-      }
-      if (state.audio.ctx.state === "suspended") state.audio.ctx.resume();
-    }
+        // =========================
+        // Initialize game state
+        // =========================
+        function initGameState() {
+            game = {
+                score: CONFIG.game.initialScore,
+                level: CONFIG.game.initialLevel,
+                lives: CONFIG.game.initialLives,
+                gameOver: CONFIG.game.startGameOver,
+                particles: [],
+                stars: []
+            };
 
-    function playClick(type) {
-      if (type === "mute") return;
-      const ctx = state.audio.ctx;
-      const t = ctx.currentTime;
-      const osc = ctx.createOscillator();
-      const g = ctx.createGain();
+            player = {
+                width: CONFIG.player.baseWidth,
+                height: CONFIG.player.baseHeight,
+                x: 0,
+                y: 0,
+                speed: CONFIG.player.speed,
+                trail: [],
+                enginePulse: 0
+            };
 
-      // Crisp, percussive ticks
-      osc.type = "square";
-      const freq = (type === "high") ? 2000 : 1200;
-      osc.frequency.setValueAtTime(freq, t);
+            asteroids = [];
+            gems = [];
+            lasers = [];
+        }
 
-      g.gain.setValueAtTime(0.8, t);
-      //g.gain.exponentialRampToValueAtTime(1.0, t + 0.002);   // sharp attack
-      g.gain.exponentialRampToValueAtTime(0.001, t + 0.05);  // short decay
+        function resetPlayerPosition() {
+            player.x = canvasWidth / 2 - player.width / 2;
+            player.y = canvasHeight - player.height - player.height / 2;
+        }
 
-      osc.connect(g).connect(ctx.destination);
-      osc.start(t);
-      osc.stop(t + 0.1);
-    }
+        // =========================
+        // Input
+        // =========================
+        function initInput() {
+            document.addEventListener('keydown', (e) => {
+                keys[e.key.toLowerCase()] = true;
+                if (e.key === ' ') {
+                    keys['space'] = true;
+                    e.preventDefault();
+                }
+            });
 
-    // ---------- URL sync ----------
-    function readFromURL() {
-      const p = new URLSearchParams(location.search);
-      const bpm = parseInt(p.get("bpm"));
-      const beats = parseInt(p.get("beats"));
-      const pattern = p.get("pattern");
+            document.addEventListener('keyup', (e) => {
+                keys[e.key.toLowerCase()] = false;
+                if (e.key === ' ') {
+                    keys['space'] = false;
+                }
+            });
 
-      if (!isNaN(bpm)) state.bpm = clamp(bpm, 1, 900);
-      if (!isNaN(beats)) state.beats = clamp(beats, 1, 64);
-      if (pattern) state.sounds = normalizePattern(pattern, state.beats);
+            // Listen for window resize
+            window.addEventListener('resize', resizeCanvas);
+        }
 
-      // Reflect into inputs
-      $("bpm").value = state.bpm;
-      $("beats").value = state.beats;
-      $("pattern").value = state.sounds.join(",");
-    }
+        // =========================
+        // Utility
+        // =========================
+        function checkCollision(rect1, rect2) {
+            return rect1.x < rect2.x + rect2.width &&
+                   rect1.x + rect1.width > rect2.x &&
+                   rect1.y < rect2.y + rect2.height &&
+                   rect1.y + rect1.height > rect2.y;
+        }
 
-    function writeToURL() {
-      const url = new URL(location.href);
-      url.searchParams.set("bpm", String(state.bpm));
-      url.searchParams.set("beats", String(state.beats));
-      url.searchParams.set("pattern", state.sounds.join(","));
-      history.replaceState(null, "", url);
-    }
+        function getRandomRedColor() {
+            const red = CONFIG.asteroid.color.red;
+            const green = Math.floor(Math.random() * CONFIG.asteroid.color.greenMaxExclusive);
+            const blue = Math.floor(Math.random() * CONFIG.asteroid.color.blueMaxExclusive);
+            return `rgb(${red}, ${green}, ${blue})`;
+        }
 
-    // ---------- Helpers ----------
-    function clamp(v, min, max) { return Math.min(max, Math.max(min, v)); }
+        // =========================
+        // Background stars
+        // =========================
+        function initStars() {
+            if (!game) {
+                console.error('Game not initialized yet, cannot init stars');
+                return;
+            }
+            
+            game.stars = [];
+            const starCount = Math.floor(canvasWidth * canvasHeight * CONFIG.stars.density);
+            for (let i = 0; i < starCount; i++) {
+                game.stars.push({
+                    x: Math.random() * canvasWidth,
+                    y: Math.random() * canvasHeight,
+                    size: Math.random() * CONFIG.stars.sizeRange + CONFIG.stars.sizeMin,
+                    speed: Math.random() * CONFIG.stars.speedRange + CONFIG.stars.speedMin,
+                    opacity: Math.random() * CONFIG.stars.opacityRange + CONFIG.stars.opacityMin
+                });
+            }
+        }
 
-    function normalizeToken(tok) {
-      if (!tok) return "high";
-      const t = String(tok).toLowerCase().trim();
-      if (t === "high" || t === "low" || t === "mute") return t;
-      if (t in ALIASES) return ALIASES[t];
-      return "high";
-    }
+        function updateStars() {
+            for (const star of game.stars) {
+                star.y += star.speed;
+                if (star.y > canvasHeight) {
+                    star.y = 0;
+                    star.x = Math.random() * canvasWidth;
+                }
+            }
+        }
 
-    function normalizePattern(str, beats) {
-      const parts = String(str).split(",").map(s => normalizeToken(s));
-      const arr = parts.slice(0, beats);
-      while (arr.length < beats) arr.push("high");
-      return arr;
-    }
+        function drawStars() {
+            ctx.fillStyle = 'white';
+            for (const star of game.stars) {
+                ctx.globalAlpha = star.opacity;
+                ctx.fillRect(star.x, star.y, star.size, star.size);
+            }
+            ctx.globalAlpha = 1;
+        }
 
-    function cycleSound(s) {
-      const i = SOUND_CYCLE.indexOf(s);
-      return SOUND_CYCLE[(i + 1) % SOUND_CYCLE.length];
-    }
+        // =========================
+        // Particles
+        // =========================
+        function createParticle(x, y, color, speed = CONFIG.particles.defaultSpeed) {
+            return {
+                x,
+                y,
+                vx: (Math.random() - 0.5) * speed * 2,
+                vy: (Math.random() - 0.5) * speed * 2,
+                life: 1,
+                decay: CONFIG.particles.lifeDecay,
+                color,
+                size: Math.random() * CONFIG.particles.sizeRange + CONFIG.particles.sizeMin
+            };
+        }
 
-    // ---------- UI render ----------
-    function renderBeatBar() {
-      const bar = $("beatBar");
-      bar.innerHTML = "";
-      for (let i = 0; i < state.beats; i++) {
-        const s = state.sounds[i] || "high";
-        const el = document.createElement("div");
-        el.className = `beat ${s}`;
-        el.title = `Beat ${i + 1}: ${s}`;
-        const dot = document.createElement("div");
-        dot.className = "dot";
-        el.appendChild(dot);
+        function createExplosion(x, y, color, count = 15) {
+            for (let i = 0; i < count; i++) {
+                game.particles.push(createParticle(x, y, color, CONFIG.particles.explosionSpeed));
+            }
+        }
 
-        el.addEventListener("click", () => {
-          state.sounds[i] = cycleSound(state.sounds[i]);
-          // Update UI immediately without full re-render
-          el.className = `beat ${state.sounds[i]}`;
-          el.title = `Beat ${i + 1}: ${state.sounds[i]}`;
-          // Reflect in pattern field + URL
-          $("pattern").value = state.sounds.join(",");
-          writeToURL();
+        function updateParticles() {
+            for (let i = game.particles.length - 1; i >= 0; i--) {
+                const p = game.particles[i];
+                p.x += p.vx;
+                p.y += p.vy;
+                p.life -= p.decay;
+                p.size *= 0.98;
+                if (p.life <= 0 || p.size <= 0.1) {
+                    game.particles.splice(i, 1);
+                }
+            }
+        }
+
+        function drawParticles() {
+            for (const p of game.particles) {
+                ctx.save();
+                ctx.globalAlpha = p.life;
+                ctx.fillStyle = p.color;
+                ctx.fillRect(p.x - p.size / 2, p.y - p.size / 2, p.size, p.size);
+                ctx.restore();
+            }
+        }
+
+        // =========================
+        // Creators
+        // =========================
+        function createAsteroid() {
+            const size = Math.random() * CONFIG.asteroid.sizeRange + CONFIG.asteroid.sizeMin;
+            return {
+                x: Math.random() * (canvasWidth - size),
+                y: -size,
+                horizontalOffset: (Math.random() - 0.5) * CONFIG.asteroid.horizontalOffset,
+                width: size,
+                height: size,
+                color: getRandomRedColor(),
+                sides: Math.random() * CONFIG.asteroid.sidesRange + CONFIG.asteroid.sidesMin,
+                speed: Math.random() * CONFIG.asteroid.baseSpeedMax + game.level * CONFIG.asteroid.levelSpeedFactor,
+                rotation: 0,
+                rotationSpeed: (Math.random() - 0.5) * CONFIG.asteroid.rotSpeedRange
+            };
+        }
+
+        function createGem() {
+            return {
+                x: Math.random() * (canvasWidth - CONFIG.gem.width),
+                y: -CONFIG.gem.height,
+                width: CONFIG.gem.width,
+                height: CONFIG.gem.height,
+                speed: Math.random() * CONFIG.gem.speedRange + CONFIG.gem.speedMin,
+                pulse: 0,
+                collected: false
+            };
+        }
+
+        function createLaser(x, y) {
+            return {
+                x: x + CONFIG.laser.xOffset,
+                y: y,
+                width: CONFIG.laser.width,
+                height: CONFIG.laser.height,
+                speed: CONFIG.laser.speed,
+                color: CONFIG.laser.color
+            };
+        }
+
+        function shootLaser() {
+            const laser = createLaser(
+                player.x + player.width / 2,
+                player.y
+            );
+            lasers.push(laser);
+        }
+
+        // =========================
+        // Drawing
+        // =========================
+        function drawPlayer() {
+            ctx.save();
+
+            // Trail
+            ctx.globalAlpha = 0.6;
+            for (let i = 0; i < player.trail.length; i++) {
+                const t = player.trail[i];
+                ctx.fillStyle = `rgba(0, 255, 255, ${0.3 * (i / player.trail.length)})`;
+                ctx.fillRect(t.x - 2, t.y - 2, 4, 4);
+            }
+            ctx.globalAlpha = 1;
+
+            // Ship
+            ctx.translate(player.x + player.width / 2, player.y + player.height / 2);
+
+            ctx.fillStyle = CONFIG.player.colors.body;
+            ctx.beginPath();
+            ctx.moveTo(0, -player.height / 2);
+            ctx.lineTo(-player.width / 2, player.height / 2);
+            ctx.lineTo(0, player.width / 2);
+            ctx.lineTo(player.width / 2, player.height / 2);
+            ctx.closePath();
+            ctx.fill();
+
+            ctx.fillStyle = CONFIG.player.colors.detail;
+            ctx.fillRect(-2, -8, 4, 8);
+
+            // Engine glow
+            const ep = CONFIG.player.enginePulse;
+            const engineIntensity = ep.intensityBase + ep.intensityRange * Math.sin(player.enginePulse * ep.intensityRate);
+            const engineAlpha = ep.alphaBase + ep.alphaRange * Math.sin(player.enginePulse * ep.alphaRate);
+
+            ctx.globalAlpha = engineAlpha;
+            ctx.fillStyle = `rgba(255, ${Math.floor(107 * engineIntensity)}, ${Math.floor(107 * engineIntensity)}, 1)`;
+            ctx.shadowColor = CONFIG.player.colors.engineGlow;
+            ctx.shadowBlur = 15 * engineIntensity;
+
+            ctx.beginPath();
+            ctx.moveTo(-player.width / 6, player.height / 2);
+            ctx.lineTo(0, player.width / 2 + player.height / 2);
+            ctx.lineTo(player.width / 6, player.height / 2);
+            ctx.closePath();
+            ctx.fill();
+
+            ctx.shadowBlur = 0;
+            ctx.globalAlpha = 1;
+
+            ctx.restore();
+        }
+
+        function drawAsteroid(asteroid) {
+            ctx.save();
+            ctx.translate(asteroid.x + asteroid.width / 2, asteroid.y + asteroid.height / 2);
+            ctx.rotate(asteroid.rotation);
+
+            ctx.fillStyle = asteroid.color;
+            ctx.strokeStyle = asteroid.color;
+            ctx.lineWidth = 2;
+
+            ctx.beginPath();
+            const sides = asteroid.sides;
+            for (let i = 0; i < sides; i++) {
+                const angle = (i / sides) * Math.PI * 2;
+                const radius = (asteroid.width / 2) * (0.8 + Math.sin(i * 1.5) * 0.2);
+                const x = Math.cos(angle) * radius;
+                const y = Math.sin(angle) * radius;
+                if (i === 0) ctx.moveTo(x, y);
+                else ctx.lineTo(x, y);
+            }
+            ctx.closePath();
+            ctx.fill();
+            ctx.stroke();
+
+            ctx.restore();
+        }
+
+        function drawGem(gem) {
+            ctx.save();
+            ctx.translate(gem.x + gem.width / 2, gem.y + gem.height / 2);
+
+            const scale = 1 + Math.sin(gem.pulse) * 0.2;
+            ctx.scale(scale, scale);
+
+            ctx.shadowColor = CONFIG.gem.colors.glow;
+            ctx.shadowBlur = 20;
+
+            ctx.fillStyle = CONFIG.gem.colors.fill;
+            ctx.strokeStyle = CONFIG.gem.colors.stroke;
+            ctx.lineWidth = 2;
+
+            ctx.beginPath();
+            ctx.moveTo(0, -8);
+            ctx.lineTo(6, -3);
+            ctx.lineTo(6, 3);
+            ctx.lineTo(0, 8);
+            ctx.lineTo(-6, 3);
+            ctx.lineTo(-6, -3);
+            ctx.closePath();
+            ctx.fill();
+            ctx.stroke();
+
+            ctx.restore();
+        }
+
+        function drawLaser(laser) {
+            ctx.save();
+            ctx.shadowColor = laser.color;
+            ctx.shadowBlur = 10;
+
+            ctx.fillStyle = laser.color;
+            ctx.fillRect(laser.x, laser.y, laser.width, laser.height);
+
+            ctx.fillStyle = CONFIG.laser.centerColor;
+            ctx.fillRect(laser.x + 0.5, laser.y, laser.width - 1, laser.height);
+
+            ctx.restore();
+        }
+
+        // =========================
+        // Updates
+        // =========================
+        function updatePlayer() {
+            if ((keys['a'] || keys['arrowleft']) && player.x > 0) {
+                player.x -= player.speed;
+            }
+            if ((keys['d'] || keys['arrowright']) && player.x < canvasWidth - player.width) {
+                player.x += player.speed;
+            }
+            if ((keys['w'] || keys['arrowup']) && player.y > 0) {
+                player.y -= player.speed;
+            }
+            if ((keys['s'] || keys['arrowdown']) && player.y < canvasHeight - player.height) {
+                player.y += player.speed;
+            }
+
+            if (keys['space']) {
+                const now = Date.now();
+                if (now - lastShot > CONFIG.input.shotCooldownMs) {
+                    shootLaser();
+                    lastShot = now;
+                }
+            }
+
+            player.enginePulse += CONFIG.player.enginePulseIncrement;
+
+            player.trail.push({ x: player.x + player.width / 2, y: player.y });
+            if (player.trail.length > CONFIG.player.trailMax) {
+                player.trail.shift();
+            }
+        }
+
+        function updateAsteroids() {
+            for (let i = asteroids.length - 1; i >= 0; i--) {
+                const a = asteroids[i];
+                a.y += a.speed;
+                a.x += a.horizontalOffset;
+                a.rotation += a.rotationSpeed;
+
+                if (a.y > canvasHeight) {
+                    asteroids.splice(i, 1);
+                }
+
+                if (checkCollision(player, a)) {
+                    createExplosion(player.x + player.width / 2, player.y + player.height / 2, CONFIG.player.colors.engineGlow);
+                    game.lives--;
+
+                    resetPlayerPosition();
+                    player.width = CONFIG.player.baseWidth;
+                    player.height = CONFIG.player.baseHeight;
+
+                    if (game.lives <= 0) {
+                        game.gameOver = true;
+                    }
+
+                    asteroids.splice(i, 1);
+                }
+            }
+
+            const asteroidSpawnRate = CONFIG.asteroid.spawnBaseProb + game.level * CONFIG.asteroid.spawnLevelFactor;
+            if (Math.random() < asteroidSpawnRate * canvasWidth) {
+                asteroids.push(createAsteroid());
+            }
+        }
+
+        function updateGems() {
+            for (let i = gems.length - 1; i >= 0; i--) {
+                const g = gems[i];
+                g.y += g.speed;
+                g.pulse += CONFIG.gem.pulseRate;
+
+                if (g.y > canvasHeight) {
+                    gems.splice(i, 1);
+                }
+
+                if (checkCollision(player, g)) {
+                    createExplosion(g.x + g.width / 2, g.y + g.height / 2, CONFIG.gem.colors.fill, CONFIG.particles.gemExplosionCount);
+                    game.score += CONFIG.scoring.gemValue;
+                    gems.splice(i, 1);
+
+                    player.width += player.width * CONFIG.player.incSizeFactor;
+                    player.height += player.height * CONFIG.player.incSizeFactor;
+
+                    if (game.score % CONFIG.scoring.levelUpEvery === 0) {
+                        game.level++;
+                    }
+                }
+            }
+
+            if (Math.random() < CONFIG.gem.spawnProb * canvasWidth) {
+                gems.push(createGem());
+            }
+        }
+
+        function updateLasers() {
+            for (let i = lasers.length - 1; i >= 0; i--) {
+                const l = lasers[i];
+                l.y -= l.speed;
+
+                if (l.y + l.height < 0) {
+                    lasers.splice(i, 1);
+                    continue;
+                }
+
+                for (let j = asteroids.length - 1; j >= 0; j--) {
+                    const a = asteroids[j];
+                    if (checkCollision(l, a)) {
+                        createExplosion(a.x + a.width / 2, a.y + a.height / 2, a.color, CONFIG.particles.asteroidExplosionCount);
+                        game.score += CONFIG.scoring.asteroidValue;
+
+                        lasers.splice(i, 1);
+                        asteroids.splice(j, 1);
+
+                        if (game.score % CONFIG.scoring.levelUpEvery === 0) {
+                            game.level++;
+                        }
+                        break;
+                    }
+                }
+            }
+        }
+
+        // =========================
+        // UI
+        // =========================
+        function updateUI() {
+            document.getElementById('score').textContent = game.score;
+            document.getElementById('level').textContent = game.level;
+            document.getElementById('lives').textContent = game.lives;
+
+            const gameOverElement = document.getElementById('gameOver');
+            if (game.gameOver) {
+                document.getElementById('finalScore').textContent = game.score;
+                gameOverElement.style.display = 'block';
+            } else {
+                gameOverElement.style.display = 'none';
+            }
+        }
+
+        // =========================
+        // Main loop
+        // =========================
+        function gameLoop() {
+            if (!game.gameOver) {
+                ctx.fillStyle = 'rgba(10, 10, 35, 0.9)';
+                ctx.fillRect(0, 0, canvasWidth, canvasHeight);
+
+                updateStars();
+                updatePlayer();
+                updateAsteroids();
+                updateGems();
+                updateLasers();
+                updateParticles();
+
+                drawStars();
+                drawPlayer();
+
+                for (const a of asteroids) drawAsteroid(a);
+                for (const g of gems) drawGem(g);
+                for (const l of lasers) drawLaser(l);
+
+                drawParticles();
+            }
+
+            updateUI();
+            requestAnimationFrame(gameLoop);
+        }
+
+        // =========================
+        // Controls
+        // =========================
+        function restartGame() {
+            game.score = CONFIG.game.initialScore;
+            game.level = CONFIG.game.initialLevel;
+            game.lives = CONFIG.game.initialLives;
+            game.gameOver = false;
+            game.particles = [];
+
+            resetPlayerPosition();
+            player.width = CONFIG.player.baseWidth;
+            player.height = CONFIG.player.baseHeight;
+
+            player.trail = [];
+            player.enginePulse = 0;
+
+            asteroids = [];
+            gems = [];
+            lasers = [];
+
+            document.getElementById('gameOver').style.display = 'none';
+
+            initStars();
+        }
+
+        // =========================
+        // Init
+        // =========================
+        function initGame() {
+            console.log('Initializing game...');
+            
+            // Initialize canvas first
+            initCanvas();
+            
+            // Initialize game state
+            initGameState();
+            
+            // Initialize input handlers  
+            initInput();
+            
+            // Set up player position
+            resetPlayerPosition();
+            
+            // Initialize stars
+            initStars();
+            
+            // Show initial UI state (game over screen)
+            console.log('Game over state:', game.gameOver);
+            updateUI();
+            
+            // Start game loop
+            gameLoop();
+            
+            console.log('Game initialized');
+        }
+
+        // Wait for DOM to be fully loaded
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('DOM loaded, starting game initialization...');
+            initGame();
         });
-
-        bar.appendChild(el);
-      }
-    }
-
-    function setActiveBeat(idx) {
-      const beats = document.querySelectorAll(".beat");
-      beats.forEach((b, i) => b.classList.toggle("active", i === idx));
-    }
-
-    // ---------- Metronome engine ----------
-    function start() {
-      ensureAudio();
-      state.playing = true;
-      state.currentBeat = 0;
-      setActiveBeat(-1);
-      if (state.timer) clearInterval(state.timer);
-      state.timer = setInterval(tick, Math.max(10, 60000 / state.bpm));
-      $("toggleBtn").textContent = "Stop";
-    }
-
-    function stop() {
-      state.playing = false;
-      if (state.timer) clearInterval(state.timer);
-      state.timer = null;
-      setActiveBeat(-1);
-      $("toggleBtn").textContent = "Start";
-    }
-
-    function tick() {
-      const idx = state.currentBeat % state.beats;
-      setActiveBeat(idx);
-      playClick(state.sounds[idx]);
-      state.currentBeat++;
-    }
-
-    function rebuildIfPlaying() {
-      if (state.playing) {
-        clearInterval(state.timer);
-        state.timer = setInterval(tick, Math.max(10, 60000 / state.bpm));
-        state.currentBeat = 0;
-      }
-    }
-
-    // ---------- Input bindings ----------
-    $("toggleBtn").addEventListener("click", () => {
-      state.playing ? stop() : start();
-    });
-
-    $("bpm").addEventListener("input", () => {
-      state.bpm = clamp(parseInt($("bpm").value || "120"), 1, 900);
-      $("bpm").value = state.bpm;
-      writeToURL();
-      rebuildIfPlaying();
-    });
-
-    $("bpm").addEventListener("focus", () => {
-      $("bpm").select();
-    });
-
-    $("beats").addEventListener("input", () => {
-      state.beats = clamp(parseInt($("beats").value || "4"), 1, 64);
-      $("beats").value = state.beats;
-      // Adjust pattern to match new beats count
-      state.sounds = (state.sounds || []).slice(0, state.beats);
-      while (state.sounds.length < state.beats) state.sounds.push("high");
-      $("pattern").value = state.sounds.join(",");
-      writeToURL();
-      renderBeatBar();
-      state.currentBeat = 0;
-      rebuildIfPlaying();
-    });
-
-    $("beats").addEventListener("focus", () => {
-      $("beats").select();
-    });
-
-    // ---------- Init ----------
-    readFromURL();
-    renderBeatBar();
-    writeToURL();
-  </script>
+    </script>
 </body>
 </html>
