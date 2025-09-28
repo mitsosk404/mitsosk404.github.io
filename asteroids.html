@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-    <title>Space Explorer</title>
+    <title>Space Explorer - Settings</title>
     <style>
         body {
             margin: 0;
@@ -57,6 +57,129 @@
             z-index: 10;
         }
 
+        .settings-btn {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            background: rgba(0, 255, 255, 0.2);
+            border: 2px solid #00ffff;
+            color: #00ffff;
+            padding: 8px 16px;
+            font-size: 14px;
+            border-radius: 5px;
+            cursor: pointer;
+            z-index: 30;
+            transition: all 0.3s ease;
+        }
+
+        .settings-btn:hover {
+            background: rgba(0, 255, 255, 0.4);
+            transform: translateY(-2px);
+        }
+
+        .settings-panel {
+            position: absolute;
+            top: 0;
+            right: -400px;
+            width: 380px;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.95);
+            border-left: 3px solid #00ffff;
+            color: #00ffff;
+            overflow-y: auto;
+            z-index: 25;
+            transition: right 0.3s ease;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+
+        .settings-panel.open {
+            right: 0;
+        }
+
+        .settings-panel h2 {
+            margin-top: 0;
+            color: #00ffff;
+            text-align: center;
+            font-size: 20px;
+            border-bottom: 2px solid #00ffff;
+            padding-bottom: 10px;
+        }
+
+        .setting-group {
+            margin-bottom: 20px;
+            border: 1px solid rgba(0, 255, 255, 0.3);
+            border-radius: 5px;
+            padding: 15px;
+        }
+
+        .setting-group h3 {
+            margin-top: 0;
+            color: #ff6b6b;
+            font-size: 16px;
+            border-bottom: 1px solid rgba(255, 107, 107, 0.5);
+            padding-bottom: 5px;
+        }
+
+        .setting-item {
+            margin-bottom: 12px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .setting-item label {
+            font-size: 12px;
+            margin-bottom: 4px;
+            color: #ffffff;
+        }
+
+        .setting-item input[type="number"],
+        .setting-item input[type="range"] {
+            background: rgba(0, 255, 255, 0.1);
+            border: 1px solid #00ffff;
+            color: #00ffff;
+            padding: 4px 8px;
+            border-radius: 3px;
+            font-size: 12px;
+        }
+
+        .setting-item input[type="color"] {
+            background: transparent;
+            border: 1px solid #00ffff;
+            width: 40px;
+            height: 30px;
+            border-radius: 3px;
+            cursor: pointer;
+        }
+
+        .setting-item input[type="checkbox"] {
+            margin-right: 8px;
+        }
+
+        .range-display {
+            font-size: 11px;
+            color: #ffff00;
+            text-align: right;
+        }
+
+        .reset-btn {
+            background: #ff6b6b;
+            border: none;
+            color: white;
+            padding: 10px 20px;
+            font-size: 14px;
+            border-radius: 5px;
+            cursor: pointer;
+            width: 100%;
+            margin-top: 20px;
+            transition: all 0.3s ease;
+        }
+
+        .reset-btn:hover {
+            background: #ff8e8e;
+            transform: translateY(-2px);
+        }
+
         .game-over {
             position: absolute;
             top: 50%;
@@ -87,6 +210,20 @@
             transform: translateY(-2px);
             box-shadow: 0 6px 20px rgba(255, 107, 107, 0.4);
         }
+
+        /* Scrollbar styling for settings panel */
+        .settings-panel::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .settings-panel::-webkit-scrollbar-track {
+            background: rgba(0, 255, 255, 0.1);
+        }
+
+        .settings-panel::-webkit-scrollbar-thumb {
+            background: rgba(0, 255, 255, 0.5);
+            border-radius: 4px;
+        }
     </style>
 </head>
 <body>
@@ -97,6 +234,193 @@
             <div>Score: <span id="score">0</span></div>
             <div>Level: <span id="level">1</span></div>
             <div>Lives: <span id="lives">3</span></div>
+        </div>
+
+        <button class="settings-btn" onclick="toggleSettings()">⚙️ Settings</button>
+
+        <div class="settings-panel" id="settingsPanel">
+            <h2>Game Settings</h2>
+            
+            <div class="setting-group">
+                <h3>Game Configuration</h3>
+                <div class="setting-item">
+                    <label>Initial Lives:</label>
+                    <input type="number" id="initialLives" min="1" max="10" value="3">
+                </div>
+                <div class="setting-item">
+                    <label>Level Up Score:</label>
+                    <input type="number" id="levelUpEvery" min="50" max="500" step="25" value="100">
+                </div>
+                <div class="setting-item">
+                    <label>Shot Cooldown (ms):</label>
+                    <input type="number" id="shotCooldown" min="10" max="200" step="10" value="50">
+                </div>
+            </div>
+
+            <div class="setting-group">
+                <h3>Player Settings</h3>
+                <div class="setting-item">
+                    <label>Ship Speed:</label>
+                    <input type="range" id="playerSpeed" min="1" max="15" step="0.5" value="5">
+                    <span class="range-display" id="playerSpeedDisplay">5</span>
+                </div>
+                <div class="setting-item">
+                    <label>Ship Width:</label>
+                    <input type="range" id="playerWidth" min="10" max="40" step="2" value="20">
+                    <span class="range-display" id="playerWidthDisplay">20</span>
+                </div>
+                <div class="setting-item">
+                    <label>Ship Height:</label>
+                    <input type="range" id="playerHeight" min="15" max="50" step="2" value="25">
+                    <span class="range-display" id="playerHeightDisplay">25</span>
+                </div>
+                <div class="setting-item">
+                    <label>Trail Length:</label>
+                    <input type="range" id="trailMax" min="0" max="30" step="1" value="10">
+                    <span class="range-display" id="trailMaxDisplay">10</span>
+                </div>
+                <div class="setting-item">
+                    <label>Ship Body Color:</label>
+                    <input type="color" id="playerBodyColor" value="#00ffff">
+                </div>
+                <div class="setting-item">
+                    <label>Engine Color:</label>
+                    <input type="color" id="engineColor" value="#ff6b6b">
+                </div>
+            </div>
+
+            <div class="setting-group">
+                <h3>Stars Background</h3>
+                <div class="setting-item">
+                    <label>Star Density:</label>
+                    <input type="range" id="starDensity" min="0.00001" max="0.0005" step="0.00001" value="0.0001">
+                    <span class="range-display" id="starDensityDisplay">0.0001</span>
+                </div>
+                <div class="setting-item">
+                    <label>Min Star Size:</label>
+                    <input type="range" id="starSizeMin" min="0.1" max="3" step="0.1" value="0.5">
+                    <span class="range-display" id="starSizeMinDisplay">0.5</span>
+                </div>
+                <div class="setting-item">
+                    <label>Star Speed:</label>
+                    <input type="range" id="starSpeedMin" min="0.1" max="5" step="0.1" value="0.5">
+                    <span class="range-display" id="starSpeedMinDisplay">0.5</span>
+                </div>
+            </div>
+
+            <div class="setting-group">
+                <h3>Asteroid Settings</h3>
+                <div class="setting-item">
+                    <label>Min Asteroid Size:</label>
+                    <input type="range" id="asteroidSizeMin" min="10" max="50" step="2" value="20">
+                    <span class="range-display" id="asteroidSizeMinDisplay">20</span>
+                </div>
+                <div class="setting-item">
+                    <label>Max Asteroid Size:</label>
+                    <input type="range" id="asteroidSizeMax" min="50" max="200" step="5" value="110">
+                    <span class="range-display" id="asteroidSizeMaxDisplay">110</span>
+                </div>
+                <div class="setting-item">
+                    <label>Base Speed:</label>
+                    <input type="range" id="asteroidBaseSpeed" min="0.5" max="5" step="0.1" value="2">
+                    <span class="range-display" id="asteroidBaseSpeedDisplay">2</span>
+                </div>
+                <div class="setting-item">
+                    <label>Level Speed Boost:</label>
+                    <input type="range" id="asteroidLevelSpeed" min="0.1" max="2" step="0.1" value="0.5">
+                    <span class="range-display" id="asteroidLevelSpeedDisplay">0.5</span>
+                </div>
+                <div class="setting-item">
+                    <label>Spawn Rate:</label>
+                    <input type="range" id="asteroidSpawnRate" min="0.000005" max="0.0001" step="0.000005" value="0.00002">
+                    <span class="range-display" id="asteroidSpawnRateDisplay">0.00002</span>
+                </div>
+                <div class="setting-item">
+                    <label>Rotation Speed:</label>
+                    <input type="range" id="asteroidRotSpeed" min="0.1" max="3" step="0.1" value="1">
+                    <span class="range-display" id="asteroidRotSpeedDisplay">1</span>
+                </div>
+            </div>
+
+            <div class="setting-group">
+                <h3>Gem Settings</h3>
+                <div class="setting-item">
+                    <label>Gem Size:</label>
+                    <input type="range" id="gemSize" min="8" max="30" step="1" value="15">
+                    <span class="range-display" id="gemSizeDisplay">15</span>
+                </div>
+                <div class="setting-item">
+                    <label>Gem Speed:</label>
+                    <input type="range" id="gemSpeed" min="1" max="8" step="0.5" value="3">
+                    <span class="range-display" id="gemSpeedDisplay">3</span>
+                </div>
+                <div class="setting-item">
+                    <label>Spawn Rate:</label>
+                    <input type="range" id="gemSpawnRate" min="0.000005" max="0.00005" step="0.000005" value="0.000015">
+                    <span class="range-display" id="gemSpawnRateDisplay">0.000015</span>
+                </div>
+                <div class="setting-item">
+                    <label>Gem Value:</label>
+                    <input type="number" id="gemValue" min="1" max="100" step="5" value="10">
+                </div>
+                <div class="setting-item">
+                    <label>Gem Color:</label>
+                    <input type="color" id="gemColor" value="#ffff00">
+                </div>
+            </div>
+
+            <div class="setting-group">
+                <h3>Laser Settings</h3>
+                <div class="setting-item">
+                    <label>Laser Speed:</label>
+                    <input type="range" id="laserSpeed" min="5" max="25" step="1" value="12">
+                    <span class="range-display" id="laserSpeedDisplay">12</span>
+                </div>
+                <div class="setting-item">
+                    <label>Laser Width:</label>
+                    <input type="range" id="laserWidth" min="1" max="8" step="1" value="2">
+                    <span class="range-display" id="laserWidthDisplay">2</span>
+                </div>
+                <div class="setting-item">
+                    <label>Laser Height:</label>
+                    <input type="range" id="laserHeight" min="5" max="30" step="1" value="15">
+                    <span class="range-display" id="laserHeightDisplay">15</span>
+                </div>
+                <div class="setting-item">
+                    <label>Laser Color:</label>
+                    <input type="color" id="laserColor" value="#00ffff">
+                </div>
+                <div class="setting-item">
+                    <label>Asteroid Hit Value:</label>
+                    <input type="number" id="asteroidValue" min="5" max="100" step="5" value="25">
+                </div>
+            </div>
+
+            <div class="setting-group">
+                <h3>Particle Effects</h3>
+                <div class="setting-item">
+                    <label>Particle Count (Asteroid):</label>
+                    <input type="range" id="asteroidParticles" min="5" max="50" step="5" value="20">
+                    <span class="range-display" id="asteroidParticlesDisplay">20</span>
+                </div>
+                <div class="setting-item">
+                    <label>Particle Count (Gem):</label>
+                    <input type="range" id="gemParticles" min="3" max="20" step="1" value="8">
+                    <span class="range-display" id="gemParticlesDisplay">8</span>
+                </div>
+                <div class="setting-item">
+                    <label>Particle Speed:</label>
+                    <input type="range" id="particleSpeed" min="1" max="10" step="0.5" value="5">
+                    <span class="range-display" id="particleSpeedDisplay">5</span>
+                </div>
+                <div class="setting-item">
+                    <label>Particle Life Decay:</label>
+                    <input type="range" id="particleDecay" min="0.005" max="0.05" step="0.005" value="0.02">
+                    <span class="range-display" id="particleDecayDisplay">0.02</span>
+                </div>
+            </div>
+
+            <button class="reset-btn" onclick="resetAllSettings()">Reset All Settings</button>
         </div>
 
         <div class="controls">
@@ -121,36 +445,12 @@
         let game, player, asteroids, gems, lasers;
         let keys = {};
         let lastShot = 0;
+        let settingsOpen = false;
 
         // =========================
-        // Canvas and dimensions
+        // Default configuration (used for reset)
         // =========================
-        function initCanvas() {
-            canvas = document.getElementById('gameCanvas');
-            ctx = canvas.getContext('2d');
-            
-            canvasWidth = window.innerWidth;
-            canvasHeight = window.innerHeight;
-            
-            resizeCanvas();
-        }
-
-        function resizeCanvas() {
-            canvasWidth = window.innerWidth;
-            canvasHeight = window.innerHeight;
-            canvas.width = canvasWidth;
-            canvas.height = canvasHeight;
-            
-            // Reinitialize stars when canvas resizes (only if game exists)
-            if (game && typeof initStars === 'function') {
-                initStars();
-            }
-        }
-
-        // =========================
-        // Settings (tweakables)
-        // =========================
-        const CONFIG = {
+        const DEFAULT_CONFIG = {
             game: {
                 initialScore: 0,
                 initialLevel: 1,
@@ -182,7 +482,7 @@
                 }
             },
             stars: {
-                density: 0.0001, // Stars per pixel
+                density: 0.0001,
                 sizeMin: 0.5,
                 sizeRange: 2,
                 speedMin: 0.5,
@@ -208,7 +508,7 @@
                 rotSpeedRange: 1,
                 baseSpeedMax: 2,
                 levelSpeedFactor: 0.5,
-                spawnBaseProb: 0.00002, // Per pixel width
+                spawnBaseProb: 0.00002,
                 spawnLevelFactor: 0.000005,
                 color: {
                     red: 255,
@@ -222,7 +522,7 @@
                 speedMin: 3,
                 speedRange: 2,
                 pulseRate: 0.15,
-                spawnProb: 0.000015, // Per pixel width
+                spawnProb: 0.000015,
                 colors: {
                     fill: '#ffff00',
                     glow: '#ffff00',
@@ -243,6 +543,272 @@
                 levelUpEvery: 100
             }
         };
+
+        // Current configuration (modifiable)
+        let CONFIG = JSON.parse(JSON.stringify(DEFAULT_CONFIG));
+
+        // =========================
+        // Settings Management
+        // =========================
+        function toggleSettings() {
+            const panel = document.getElementById('settingsPanel');
+            settingsOpen = !settingsOpen;
+            panel.classList.toggle('open', settingsOpen);
+        }
+
+        function initSettings() {
+            // Initialize all setting controls with current values
+            document.getElementById('initialLives').value = CONFIG.game.initialLives;
+            document.getElementById('levelUpEvery').value = CONFIG.scoring.levelUpEvery;
+            document.getElementById('shotCooldown').value = CONFIG.input.shotCooldownMs;
+            
+            document.getElementById('playerSpeed').value = CONFIG.player.speed;
+            document.getElementById('playerWidth').value = CONFIG.player.baseWidth;
+            document.getElementById('playerHeight').value = CONFIG.player.baseHeight;
+            document.getElementById('trailMax').value = CONFIG.player.trailMax;
+            document.getElementById('playerBodyColor').value = CONFIG.player.colors.body;
+            document.getElementById('engineColor').value = CONFIG.player.colors.engineGlow;
+            
+            document.getElementById('starDensity').value = CONFIG.stars.density;
+            document.getElementById('starSizeMin').value = CONFIG.stars.sizeMin;
+            document.getElementById('starSpeedMin').value = CONFIG.stars.speedMin;
+            
+            document.getElementById('asteroidSizeMin').value = CONFIG.asteroid.sizeMin;
+            document.getElementById('asteroidSizeMax').value = CONFIG.asteroid.sizeMin + CONFIG.asteroid.sizeRange;
+            document.getElementById('asteroidBaseSpeed').value = CONFIG.asteroid.baseSpeedMax;
+            document.getElementById('asteroidLevelSpeed').value = CONFIG.asteroid.levelSpeedFactor;
+            document.getElementById('asteroidSpawnRate').value = CONFIG.asteroid.spawnBaseProb;
+            document.getElementById('asteroidRotSpeed').value = CONFIG.asteroid.rotSpeedRange;
+            
+            document.getElementById('gemSize').value = CONFIG.gem.width;
+            document.getElementById('gemSpeed').value = CONFIG.gem.speedMin;
+            document.getElementById('gemSpawnRate').value = CONFIG.gem.spawnProb;
+            document.getElementById('gemValue').value = CONFIG.scoring.gemValue;
+            document.getElementById('gemColor').value = CONFIG.gem.colors.fill;
+            
+            document.getElementById('laserSpeed').value = CONFIG.laser.speed;
+            document.getElementById('laserWidth').value = CONFIG.laser.width;
+            document.getElementById('laserHeight').value = CONFIG.laser.height;
+            document.getElementById('laserColor').value = CONFIG.laser.color;
+            document.getElementById('asteroidValue').value = CONFIG.scoring.asteroidValue;
+            
+            document.getElementById('asteroidParticles').value = CONFIG.particles.asteroidExplosionCount;
+            document.getElementById('gemParticles').value = CONFIG.particles.gemExplosionCount;
+            document.getElementById('particleSpeed').value = CONFIG.particles.explosionSpeed;
+            document.getElementById('particleDecay').value = CONFIG.particles.lifeDecay;
+
+            // Add event listeners for real-time updates
+            addSettingListeners();
+            updateAllDisplays();
+        }
+
+        function addSettingListeners() {
+            // Game settings
+            document.getElementById('initialLives').addEventListener('input', (e) => {
+                CONFIG.game.initialLives = parseInt(e.target.value);
+            });
+            document.getElementById('levelUpEvery').addEventListener('input', (e) => {
+                CONFIG.scoring.levelUpEvery = parseInt(e.target.value);
+            });
+            document.getElementById('shotCooldown').addEventListener('input', (e) => {
+                CONFIG.input.shotCooldownMs = parseInt(e.target.value);
+            });
+
+            // Player settings
+            document.getElementById('playerSpeed').addEventListener('input', (e) => {
+                CONFIG.player.speed = parseFloat(e.target.value);
+                if (player) player.speed = CONFIG.player.speed;
+                updateDisplay('playerSpeed', e.target.value);
+            });
+            document.getElementById('playerWidth').addEventListener('input', (e) => {
+                CONFIG.player.baseWidth = parseInt(e.target.value);
+                updateDisplay('playerWidth', e.target.value);
+            });
+            document.getElementById('playerHeight').addEventListener('input', (e) => {
+                CONFIG.player.baseHeight = parseInt(e.target.value);
+                updateDisplay('playerHeight', e.target.value);
+            });
+            document.getElementById('trailMax').addEventListener('input', (e) => {
+                CONFIG.player.trailMax = parseInt(e.target.value);
+                updateDisplay('trailMax', e.target.value);
+            });
+            document.getElementById('playerBodyColor').addEventListener('input', (e) => {
+                CONFIG.player.colors.body = e.target.value;
+            });
+            document.getElementById('engineColor').addEventListener('input', (e) => {
+                CONFIG.player.colors.engineGlow = e.target.value;
+            });
+
+            // Star settings
+            document.getElementById('starDensity').addEventListener('input', (e) => {
+                CONFIG.stars.density = parseFloat(e.target.value);
+                if (game) initStars();
+                updateDisplay('starDensity', e.target.value);
+            });
+            document.getElementById('starSizeMin').addEventListener('input', (e) => {
+                CONFIG.stars.sizeMin = parseFloat(e.target.value);
+                updateDisplay('starSizeMin', e.target.value);
+            });
+            document.getElementById('starSpeedMin').addEventListener('input', (e) => {
+                CONFIG.stars.speedMin = parseFloat(e.target.value);
+                updateDisplay('starSpeedMin', e.target.value);
+            });
+
+            // Asteroid settings
+            document.getElementById('asteroidSizeMin').addEventListener('input', (e) => {
+                CONFIG.asteroid.sizeMin = parseInt(e.target.value);
+                updateDisplay('asteroidSizeMin', e.target.value);
+            });
+            document.getElementById('asteroidSizeMax').addEventListener('input', (e) => {
+                CONFIG.asteroid.sizeRange = parseInt(e.target.value) - CONFIG.asteroid.sizeMin;
+                updateDisplay('asteroidSizeMax', e.target.value);
+            });
+            document.getElementById('asteroidBaseSpeed').addEventListener('input', (e) => {
+                CONFIG.asteroid.baseSpeedMax = parseFloat(e.target.value);
+                updateDisplay('asteroidBaseSpeed', e.target.value);
+            });
+            document.getElementById('asteroidLevelSpeed').addEventListener('input', (e) => {
+                CONFIG.asteroid.levelSpeedFactor = parseFloat(e.target.value);
+                updateDisplay('asteroidLevelSpeed', e.target.value);
+            });
+            document.getElementById('asteroidSpawnRate').addEventListener('input', (e) => {
+                CONFIG.asteroid.spawnBaseProb = parseFloat(e.target.value);
+                updateDisplay('asteroidSpawnRate', e.target.value);
+            });
+            document.getElementById('asteroidRotSpeed').addEventListener('input', (e) => {
+                CONFIG.asteroid.rotSpeedRange = parseFloat(e.target.value);
+                updateDisplay('asteroidRotSpeed', e.target.value);
+            });
+
+            // Gem settings
+            document.getElementById('gemSize').addEventListener('input', (e) => {
+                CONFIG.gem.width = CONFIG.gem.height = parseInt(e.target.value);
+                updateDisplay('gemSize', e.target.value);
+            });
+            document.getElementById('gemSpeed').addEventListener('input', (e) => {
+                CONFIG.gem.speedMin = parseFloat(e.target.value);
+                updateDisplay('gemSpeed', e.target.value);
+            });
+            document.getElementById('gemSpawnRate').addEventListener('input', (e) => {
+                CONFIG.gem.spawnProb = parseFloat(e.target.value);
+                updateDisplay('gemSpawnRate', e.target.value);
+            });
+            document.getElementById('gemValue').addEventListener('input', (e) => {
+                CONFIG.scoring.gemValue = parseInt(e.target.value);
+            });
+            document.getElementById('gemColor').addEventListener('input', (e) => {
+                CONFIG.gem.colors.fill = CONFIG.gem.colors.glow = e.target.value;
+            });
+
+            // Laser settings
+            document.getElementById('laserSpeed').addEventListener('input', (e) => {
+                CONFIG.laser.speed = parseInt(e.target.value);
+                updateDisplay('laserSpeed', e.target.value);
+            });
+            document.getElementById('laserWidth').addEventListener('input', (e) => {
+                CONFIG.laser.width = parseInt(e.target.value);
+                updateDisplay('laserWidth', e.target.value);
+            });
+            document.getElementById('laserHeight').addEventListener('input', (e) => {
+                CONFIG.laser.height = parseInt(e.target.value);
+                updateDisplay('laserHeight', e.target.value);
+            });
+            document.getElementById('laserColor').addEventListener('input', (e) => {
+                CONFIG.laser.color = e.target.value;
+            });
+            document.getElementById('asteroidValue').addEventListener('input', (e) => {
+                CONFIG.scoring.asteroidValue = parseInt(e.target.value);
+            });
+
+            // Particle settings
+            document.getElementById('asteroidParticles').addEventListener('input', (e) => {
+                CONFIG.particles.asteroidExplosionCount = parseInt(e.target.value);
+                updateDisplay('asteroidParticles', e.target.value);
+            });
+            document.getElementById('gemParticles').addEventListener('input', (e) => {
+                CONFIG.particles.gemExplosionCount = parseInt(e.target.value);
+                updateDisplay('gemParticles', e.target.value);
+            });
+            document.getElementById('particleSpeed').addEventListener('input', (e) => {
+                CONFIG.particles.explosionSpeed = parseFloat(e.target.value);
+                updateDisplay('particleSpeed', e.target.value);
+            });
+            document.getElementById('particleDecay').addEventListener('input', (e) => {
+                CONFIG.particles.lifeDecay = parseFloat(e.target.value);
+                updateDisplay('particleDecay', e.target.value);
+            });
+        }
+
+        function updateDisplay(id, value) {
+            const display = document.getElementById(id + 'Display');
+            if (display) {
+                display.textContent = value;
+            }
+        }
+
+        function updateAllDisplays() {
+            updateDisplay('playerSpeed', CONFIG.player.speed);
+            updateDisplay('playerWidth', CONFIG.player.baseWidth);
+            updateDisplay('playerHeight', CONFIG.player.baseHeight);
+            updateDisplay('trailMax', CONFIG.player.trailMax);
+            updateDisplay('starDensity', CONFIG.stars.density);
+            updateDisplay('starSizeMin', CONFIG.stars.sizeMin);
+            updateDisplay('starSpeedMin', CONFIG.stars.speedMin);
+            updateDisplay('asteroidSizeMin', CONFIG.asteroid.sizeMin);
+            updateDisplay('asteroidSizeMax', CONFIG.asteroid.sizeMin + CONFIG.asteroid.sizeRange);
+            updateDisplay('asteroidBaseSpeed', CONFIG.asteroid.baseSpeedMax);
+            updateDisplay('asteroidLevelSpeed', CONFIG.asteroid.levelSpeedFactor);
+            updateDisplay('asteroidSpawnRate', CONFIG.asteroid.spawnBaseProb);
+            updateDisplay('asteroidRotSpeed', CONFIG.asteroid.rotSpeedRange);
+            updateDisplay('gemSize', CONFIG.gem.width);
+            updateDisplay('gemSpeed', CONFIG.gem.speedMin);
+            updateDisplay('gemSpawnRate', CONFIG.gem.spawnProb);
+            updateDisplay('laserSpeed', CONFIG.laser.speed);
+            updateDisplay('laserWidth', CONFIG.laser.width);
+            updateDisplay('laserHeight', CONFIG.laser.height);
+            updateDisplay('asteroidParticles', CONFIG.particles.asteroidExplosionCount);
+            updateDisplay('gemParticles', CONFIG.particles.gemExplosionCount);
+            updateDisplay('particleSpeed', CONFIG.particles.explosionSpeed);
+            updateDisplay('particleDecay', CONFIG.particles.lifeDecay);
+        }
+
+        function resetAllSettings() {
+            CONFIG = JSON.parse(JSON.stringify(DEFAULT_CONFIG));
+            initSettings();
+            if (game) {
+                initStars();
+                if (player) {
+                    player.speed = CONFIG.player.speed;
+                    player.width = CONFIG.player.baseWidth;
+                    player.height = CONFIG.player.baseHeight;
+                }
+            }
+        }
+
+        // =========================
+        // Canvas and dimensions
+        // =========================
+        function initCanvas() {
+            canvas = document.getElementById('gameCanvas');
+            ctx = canvas.getContext('2d');
+            
+            canvasWidth = window.innerWidth;
+            canvasHeight = window.innerHeight;
+            
+            resizeCanvas();
+        }
+
+        function resizeCanvas() {
+            canvasWidth = window.innerWidth;
+            canvasHeight = window.innerHeight;
+            canvas.width = canvasWidth;
+            canvas.height = canvasHeight;
+            
+            // Reinitialize stars when canvas resizes (only if game exists)
+            if (game && typeof initStars === 'function') {
+                initStars();
+            }
+        }
 
         // =========================
         // Initialize game state
@@ -298,6 +864,15 @@
 
             // Listen for window resize
             window.addEventListener('resize', resizeCanvas);
+
+            // Close settings panel when clicking outside
+            document.addEventListener('click', (e) => {
+                const panel = document.getElementById('settingsPanel');
+                const btn = document.querySelector('.settings-btn');
+                if (settingsOpen && !panel.contains(e.target) && !btn.contains(e.target)) {
+                    toggleSettings();
+                }
+            });
         }
 
         // =========================
@@ -489,7 +1064,7 @@
             const engineAlpha = ep.alphaBase + ep.alphaRange * Math.sin(player.enginePulse * ep.alphaRate);
 
             ctx.globalAlpha = engineAlpha;
-            ctx.fillStyle = `rgba(255, ${Math.floor(107 * engineIntensity)}, ${Math.floor(107 * engineIntensity)}, 1)`;
+            ctx.fillStyle = CONFIG.player.colors.engineGlow;
             ctx.shadowColor = CONFIG.player.colors.engineGlow;
             ctx.shadowBlur = 15 * engineIntensity;
 
@@ -756,6 +1331,7 @@
             resetPlayerPosition();
             player.width = CONFIG.player.baseWidth;
             player.height = CONFIG.player.baseHeight;
+            player.speed = CONFIG.player.speed;
 
             player.trail = [];
             player.enginePulse = 0;
@@ -780,6 +1356,9 @@
             
             // Initialize game state
             initGameState();
+            
+            // Initialize settings panel
+            initSettings();
             
             // Initialize input handlers  
             initInput();
