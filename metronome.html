@@ -123,6 +123,10 @@
     <h1>Metronome</h1>
 
     <div class="controls">
+      <div class="field" style="grid-column: 1 / -1;">
+        <div class="label">Rhythm Name</div>
+        <input id="rhythmName" type="text" value="" placeholder="Enter rhythm name..." />
+      </div>
       <div class="field">
         <div class="label">Tempo (BPM)</div>
         <input id="bpm" type="number" min="1" max="900" value="110" />
@@ -173,6 +177,7 @@
       BEATS_DEFAULT: 4,
       HIGH_FREQ_DEFAULT: 880,
       LOW_FREQ_DEFAULT: 220,
+      RHYTHM_NAME_DEFAULT: "",
       // Metronome Engine
       MIN_INTERVAL_MS: 10,
       CLICK_DURATION_S: 0.1,
@@ -188,6 +193,7 @@
       beats: CONSTANTS.BEATS_DEFAULT,
       highFreq: CONSTANTS.HIGH_FREQ_DEFAULT,
       lowFreq: CONSTANTS.LOW_FREQ_DEFAULT,
+      rhythmName: CONSTANTS.RHYTHM_NAME_DEFAULT,
       sounds: ["low", "high", "high", "high"], // Initial pattern example
       playing: false,
       currentBeat: 0,
@@ -225,6 +231,12 @@
       osc.stop(t + CONSTANTS.CLICK_DURATION_S);
     }
 
+    // ---------- Title update ----------
+    function updateTitle() {
+      const baseName = state.rhythmName.trim();
+      document.title = baseName ? `${baseName} - Metronome` : "Interactive Metronome (URL-sync)";
+    }
+
     // ---------- URL sync ----------
     function readFromURL() {
       const p = new URLSearchParams(location.search);
@@ -232,12 +244,14 @@
       const beats = parseInt(p.get("beats"));
       const highFreq = parseInt(p.get("highFreq"));
       const lowFreq = parseInt(p.get("lowFreq"));
+      const rhythmName = p.get("rhythmName");
       const pattern = p.get("pattern");
 
       if (!isNaN(bpm)) state.bpm = clamp(bpm, CONSTANTS.BPM_MIN, CONSTANTS.BPM_MAX);
       if (!isNaN(beats)) state.beats = clamp(beats, CONSTANTS.BEATS_MIN, CONSTANTS.BEATS_MAX);
       if (!isNaN(highFreq)) state.highFreq = clamp(highFreq, CONSTANTS.FREQ_MIN, CONSTANTS.FREQ_MAX);
       if (!isNaN(lowFreq)) state.lowFreq = clamp(lowFreq, CONSTANTS.FREQ_MIN, CONSTANTS.FREQ_MAX);
+      if (rhythmName !== null) state.rhythmName = rhythmName;
       if (pattern) state.sounds = normalizePattern(pattern, state.beats);
 
       // Reflect into inputs - using state values now, not hardcoded defaults
@@ -245,7 +259,10 @@
       $("beats").value = state.beats;
       $("highFreq").value = state.highFreq;
       $("lowFreq").value = state.lowFreq;
+      $("rhythmName").value = state.rhythmName;
       $("pattern").value = state.sounds.join(",");
+      
+      updateTitle();
     }
 
     function writeToURL() {
@@ -254,6 +271,7 @@
       url.searchParams.set("beats", String(state.beats));
       url.searchParams.set("highFreq", String(state.highFreq));
       url.searchParams.set("lowFreq", String(state.lowFreq));
+      url.searchParams.set("rhythmName", state.rhythmName);
       url.searchParams.set("pattern", state.sounds.join(","));
       history.replaceState(null, "", url);
     }
@@ -350,6 +368,12 @@
     // ---------- Input bindings ----------
     $("toggleBtn").addEventListener("click", () => {
       state.playing ? stop() : start();
+    });
+
+    $("rhythmName").addEventListener("input", () => {
+      state.rhythmName = $("rhythmName").value;
+      updateTitle();
+      writeToURL();
     });
 
     $("bpm").addEventListener("input", () => {
