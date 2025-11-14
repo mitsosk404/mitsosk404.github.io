@@ -74,10 +74,8 @@
     button:hover { filter: brightness(1.05); }
     .beatbar {
       display: grid;
-      grid-auto-flow: column;
-      grid-auto-columns: minmax(0, 48px);
+      grid-template-columns: repeat(auto-fill, minmax(48px, 48px));
       gap: 12px;
-      justify-content: start;
       margin-top: 12px;
       user-select: none;
     }
@@ -90,6 +88,13 @@
       cursor: pointer;
       transition: transform .05s ease, box-shadow .1s ease, border-color .1s ease;
       position: relative;
+    }
+    .beat-num {
+      position: absolute;
+      font-size: 12px;
+      font-weight: 600;
+      color: #ffffff;
+      z-index: 1;
     }
     .beat:active { transform: translateY(1px) scale(0.98); }
     .beat.high { background: #2a2d3f; border-color: #5a2e2e; }
@@ -308,6 +313,12 @@
         const el = document.createElement("div");
         el.className = `beat ${s}`;
         el.title = `Beat ${i + 1}: ${s}`;
+        
+        const num = document.createElement("div");
+        num.className = "beat-num";
+        num.textContent = i + 1;
+        el.appendChild(num);
+        
         const dot = document.createElement("div");
         dot.className = "dot";
         el.appendChild(dot);
